@@ -1,5 +1,9 @@
 const express = require('express');
+const morgan = require('morgan');
+const { request } = require('express');
 const app = express();
+
+morgan.token('body', function (req, res) {return JSON.stringify(req.body)});
 
 let persons = [
     {
@@ -25,6 +29,9 @@ let persons = [
   ];
 
   app.use(express.json()); // json-parser to handle data received
+  //app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body')); // log messages to the console based on the tiny configuration of morgan
+  app.use(morgan('tiny', ':body')); // log messages to the console based on the tiny configuration of morgan
+
 
   app.get('/api/persons', (request, response) => {
       response.json(persons);
@@ -80,7 +87,6 @@ let persons = [
       
       person.id = id
       persons = persons.concat(person)
-      console.log(person);
 
       response.json(person);
 
