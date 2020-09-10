@@ -32,6 +32,7 @@ let persons = [
   app.use(express.json()); // json-parser to handle data received
   //app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body')); // log messages to the console based on the tiny configuration of morgan
   app.use(morgan('tiny', ':body')); // log messages to the console based on the tiny configuration of morgan
+  app.use(express.static('build')) // first checks the build dir for the request
 
   app.get('/api/persons', (request, response) => {
       response.json(persons);
