@@ -1,6 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
-const { request } = require('express');
+const cors = require('cors');
 const app = express();
 
 morgan.token('body', function (req, res) {return JSON.stringify(req.body)});
@@ -28,10 +28,10 @@ let persons = [
     }
   ];
 
+  app.use(cors()); // middleware to allow requests from other origins (port 3000 vs 3001)
   app.use(express.json()); // json-parser to handle data received
   //app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body')); // log messages to the console based on the tiny configuration of morgan
   app.use(morgan('tiny', ':body')); // log messages to the console based on the tiny configuration of morgan
-
 
   app.get('/api/persons', (request, response) => {
       response.json(persons);
@@ -92,7 +92,7 @@ let persons = [
 
   })
 
-  const PORT = 3001;
+  const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
   });
