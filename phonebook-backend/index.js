@@ -14,12 +14,14 @@ app.use(express.json()); // json-parser to handle data received
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body')); // log messages to the console based on the tiny configuration of morgan
 //app.use(morgan('tiny', ':body')); // log messages to the console based on the tiny configuration of morgan
 
+// fetch all people in the db
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(people => {
         response.json(people);
     });
 });
 
+// fetch info about the db
 app.get('/info', (request, response) => {
     const now = new Date();
     Person.countDocuments({})
@@ -29,6 +31,7 @@ app.get('/info', (request, response) => {
         });
 });
 
+// fetch a single person by id
 app.get('/api/persons/:id', (request, response, next) => {
     Person.findById(request.params.id)
         .then(person => {
@@ -41,6 +44,8 @@ app.get('/api/persons/:id', (request, response, next) => {
         .catch(error => next(error));
 });
 
+
+// remove a person by id from the db
 app.delete('/api/persons/:id', (request, response) => {
     Person.findByIdAndDelete(request.params.id)
         .then(result => {
@@ -49,40 +54,26 @@ app.delete('/api/persons/:id', (request, response) => {
         .catch(error => next(error));
 });
 
-app.post('/api/persons', (request, response) => {
+// add a person to the db
+app.post('/api/persons', (request, response, next) => {
     const body = request.body;
     
-    // const duplicate = persons.find(p => p.name === body.name)
-
-    // check whether missing name or number
-    if (!body.name) {
-        return response.status(400).json({
-            error: 'name missing'
-        });
-    } else if (!body.number) {
-        return response.status(400).json({
-            error: 'number missing'
-        });
-    }; /* else if (duplicate) {
-        return response.status(400).json({
-            error: 'duplicate entry'
-        });
-    };
-    */
-
-    // good request
-    // const id = Math.floor(Math.random()*1000000);
     const person = new Person({
         name: body.name,
         number: body.number
     });
 
-    person.save().then(savedPerson => {
-        response.json(savedPerson);
-    });
+    person
+        .save()
+        .then(savedPerson => savedPerson.toJSON())
+        .then(savedAndFormattedPerson => {
+            response.json(savedAndFormattedPerson)
+        })
+        .catch(error => next(error));
 
 });
 
+// update a person by id
 app.put('/api/persons/:id', (request, response, next) => {
     const body = request.body;
 
@@ -90,7 +81,7 @@ app.put('/api/persons/:id', (request, response, next) => {
         number: body.number
     };
 
-    Person.findByIdAndUpdate(request.params.id, person, {new: true})
+    Person.findByIdAndUpdate(request.params.id, person, {new: true, runValidators: true})
         .then(updatedPerson => {
             response.json(updatedPerson);
         })
@@ -110,6 +101,8 @@ const errorHandler = (error, request, response, next) => {
 
     if (error.name === 'CastError') {
         return response.status(400).send({ error: 'malformatted id' });
+    } else if (error.name === 'ValidationError') {
+        return response.status(400).json({error: error.message});
     };
 
     next(error); // all other errors passed to the default Express error handler

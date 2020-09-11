@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const uniqueValidator = require('mongoose-unique-validator');
+
+mongoose.set('useCreateIndex', true); // use createIndex() rather than the deprecated ensureIndex() which is still the default for some reason
 
 const url = process.env.MONGODB_URI;
 
@@ -14,9 +17,21 @@ mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
 
 // Schema for the model, but mongoDB docs can have any properties and don't need these
 const personSchema = new mongoose.Schema({
-    name: String,
-    number: String,
+    name: {
+        type: String,
+        required: true,
+        unique: true,
+        minlength: 3,
+    },
+    number: {
+        type: String,
+        required: true,
+        minlength: 8
+    },
 });
+
+// Apply the uniqueValidator plugin to the schema
+personSchema.plugin(uniqueValidator);
 
 personSchema.set('toJSON', {
     transform: (document, returnedObject) => {
